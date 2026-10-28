@@ -1,0 +1,33 @@
+name: Deploy laboratory preview
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - name: Restore complete website including original video
+        run: |
+          cat site.zip.part00 site.zip.part01 site.zip.part02 > /tmp/site.zip
+          unzip -q /tmp/site.zip -d _site
+          test -f _site/index.html
+          test -f _site/assets/video/lab-introduction.mp4
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Publish preview
+        id: deployment
+        uses: actions/deploy-pages@v4
